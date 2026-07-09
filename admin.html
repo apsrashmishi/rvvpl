@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin — Update Impact Stats | RVVPL</title>
+<meta name="robots" content="noindex, nofollow">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@700;800&family=Instrument+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+<style>
+  .admin-wrap { max-width: 680px; margin: 60px auto; padding: 0 24px; }
+  .admin-card { background:#fff; border:1px solid var(--line); border-radius:var(--radius); padding:34px; box-shadow:var(--shadow); }
+  .admin-card h1 { font-size:26px; margin-bottom:6px; }
+  .admin-card p.sub { color:var(--muted); font-size:15px; margin-bottom:24px; }
+  .field { margin-bottom:18px; }
+  .field label { display:block; font-weight:600; font-size:14px; margin-bottom:6px; }
+  .field small { display:block; color:var(--muted); font-size:12.5px; margin-top:4px; }
+  .field input { width:100%; padding:11px 14px; border:1.5px solid var(--line); border-radius:9px; font:500 15px var(--font-mono); }
+  .field input:focus { outline:none; border-color:var(--verde); }
+  .row { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  .actions { display:flex; flex-wrap:wrap; gap:12px; margin-top:8px; }
+  .msg { margin-top:16px; padding:12px 16px; border-radius:9px; font-size:14px; display:none; }
+  .msg.ok { display:block; background:#e7f6e9; color:#1d7a2c; }
+  textarea.code { width:100%; min-height:220px; margin-top:14px; padding:14px; font:13px/1.5 var(--font-mono); border:1.5px solid var(--line); border-radius:9px; background:#f6f8f5; }
+  .hidden { display:none; }
+  .note { background:#fdf0e0; color:#7a4a08; border-radius:9px; padding:14px 16px; font-size:13.5px; margin-top:22px; }
+  @media (max-width:600px){ .row{grid-template-columns:1fr;} }
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="wrap header-bar">
+    <a class="brand" href="index.html">
+      <img src="assets/rvvpl-logo.png" alt="RashMishi VerdeVita Ventures logo">
+      <span class="brand-name">RVVPL Admin<small>Impact statistics console</small></span>
+    </a>
+  </div>
+</header>
+
+<div class="admin-wrap">
+  <!-- Gate -->
+  <div class="admin-card" id="gate">
+    <h1 style="font-family:var(--font-display)">Admin sign-in</h1>
+    <p class="sub">Enter the admin passcode to update the site's impact statistics.</p>
+    <div class="field">
+      <label for="pass">Passcode</label>
+      <input type="password" id="pass" autocomplete="current-password">
+    </div>
+    <button class="btn btn-primary" onclick="unlock()">Sign in</button>
+    <p class="msg" id="gate-msg"></p>
+  </div>
+
+  <!-- Console -->
+  <div class="admin-card hidden" id="console">
+    <h1 style="font-family:var(--font-display)">Update impact stats</h1>
+    <p class="sub">Leave a field blank to show "—" on the site. Numbers only, no commas.</p>
+    <div class="row">
+      <div class="field"><label>Charge points deployed</label><input id="chargePoints" inputmode="numeric"></div>
+      <div class="field"><label>Charge points underway</label><input id="pipelinePoints" inputmode="numeric"></div>
+      <div class="field"><label>Charging sessions</label><input id="sessions" inputmode="numeric"></div>
+      <div class="field"><label>Energy dispensed (kWh)</label><input id="kwhDispensed" inputmode="numeric"></div>
+      <div class="field"><label>Carbon saved (tonnes CO₂)</label><input id="carbonTonnes" inputmode="numeric"></div>
+      <div class="field"><label>Solar capacity underway (kW)</label><input id="solarKwUnderway" inputmode="numeric"></div>
+    </div>
+    <div class="field"><label>"Updated" label</label><input id="updatedLabel" placeholder="e.g. August 2026"></div>
+    <div class="actions">
+      <button class="btn btn-primary" onclick="saveStats()">Save to this browser</button>
+      <button class="btn btn-outline" onclick="genCode()">Generate permanent code</button>
+      <button class="btn btn-outline" onclick="resetStats()">Reset to file defaults</button>
+    </div>
+    <p class="msg ok" id="save-msg">Saved. Pages viewed in this browser now show the new figures.</p>
+    <textarea class="code hidden" id="codeout" readonly aria-label="Generated site.js block"></textarea>
+    <div class="note"><strong>How this works:</strong> "Save to this browser" updates the numbers instantly, but only on this device (stored locally). To publish new figures for <em>all</em> visitors, click "Generate permanent code" and paste the block into <code>js/site.js</code>, replacing the IMPACT_STATS block — or connect a small backend when the site goes live for true one-click publishing. The passcode is a light screen for convenience, not real security; keep this page unlinked in production or protect it at the hosting level.</div>
+  </div>
+</div>
+
+<script src="js/site.js"></script>
+<script>
+var PASSCODE = "rvvpl@2026"; // change this before going live
+
+function unlock() {
+  if (document.getElementById("pass").value === PASSCODE) {
+    document.getElementById("gate").classList.add("hidden");
+    document.getElementById("console").classList.remove("hidden");
+    fillForm();
+  } else {
+    var m = document.getElementById("gate-msg");
+    m.className = "msg ok"; m.style.background = "#fdecec"; m.style.color = "#a12626";
+    m.textContent = "Incorrect passcode.";
+  }
+}
+document.getElementById("pass").addEventListener("keydown", function(e){ if(e.key==="Enter") unlock(); });
+
+var KEYS = ["chargePoints","pipelinePoints","sessions","kwhDispensed","carbonTonnes","solarKwUnderway","updatedLabel"];
+
+function fillForm() {
+  KEYS.forEach(function(k){
+    var v = IMPACT_STATS[k];
+    document.getElementById(k).value = (v === null || v === undefined) ? "" : v;
+  });
+}
+function readForm() {
+  var out = {};
+  KEYS.forEach(function(k){
+    var raw = document.getElementById(k).value.trim();
+    if (k === "updatedLabel") { out[k] = raw || IMPACT_STATS.updatedLabel; }
+    else { out[k] = raw === "" ? null : Number(raw.replace(/[,\s]/g,"")); }
+  });
+  return out;
+}
+function saveStats() {
+  localStorage.setItem("rvvpl_stats", JSON.stringify(readForm()));
+  document.getElementById("save-msg").style.display = "block";
+  setTimeout(function(){ document.getElementById("save-msg").style.display = "none"; }, 3500);
+}
+function resetStats() {
+  localStorage.removeItem("rvvpl_stats");
+  location.reload();
+}
+function genCode() {
+  var s = readForm();
+  function v(x){ return x === null ? "null" : (typeof x === "string" ? '"' + x + '"' : x); }
+  var code =
+"const IMPACT_STATS = {\n" +
+"  chargePoints: " + v(s.chargePoints) + ",\n" +
+"  pipelinePoints: " + v(s.pipelinePoints) + ",\n" +
+"  sessions: " + v(s.sessions) + ",\n" +
+"  kwhDispensed: " + v(s.kwhDispensed) + ",\n" +
+"  carbonTonnes: " + v(s.carbonTonnes) + ",\n" +
+"  solarKwUnderway: " + v(s.solarKwUnderway) + ",\n" +
+"  updatedLabel: " + v(s.updatedLabel) + "\n" +
+"};";
+  var ta = document.getElementById("codeout");
+  ta.value = code;
+  ta.classList.remove("hidden");
+  ta.focus(); ta.select();
+}
+</script>
+</body>
+</html>
