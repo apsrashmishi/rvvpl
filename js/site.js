@@ -7,12 +7,12 @@
    metric you don't want to show yet ("—" will be displayed).
    ===================================================================== */
 const IMPACT_STATS = {
-  chargePoints: 6,        // charge points deployed (live)
-  pipelinePoints: 4,      // charge points underway
-  sessions: null,         // total charging sessions to date
-  kwhDispensed: null,     // total energy dispensed, in kWh
-  carbonTonnes: null,     // carbon saved, in tonnes CO2
-  solarKwUnderway: 200,   // solar capacity underway, in kW
+  chargePoints: 6,
+  pipelinePoints: 4,
+  sessions: 475,
+  kwhDispensed: 14000,
+  carbonTonnes: 11000,
+  solarKwUnderway: 200,
   updatedLabel: "July 2026"
 };
 /* ============== end of editable block ============== */
